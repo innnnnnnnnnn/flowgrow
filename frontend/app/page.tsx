@@ -26,6 +26,11 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedPlatform, setSelectedPlatform] = useState<any>(null);
+  const [handle, setHandle] = useState("");
+  const [followers, setFollowers] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -168,18 +173,32 @@ export default function Home() {
                   { name: "TikTok", icon: <Globe />, color: "from-slate-700 to-slate-900" },
                   { name: "Facebook", icon: <Facebook />, color: "from-blue-600 to-blue-800" },
                   { name: "Threads", icon: <Search />, color: "from-slate-900 to-black" }
-                ].map((p) => (
-                  <button key={p.name} className="group relative overflow-hidden rounded-3xl p-6 bg-white/5 border border-white/10 hover:border-white/20 transition-all text-left active:scale-[0.98]">
-                    <div className={`absolute top-0 right-0 p-4 transition-transform group-hover:scale-110 opacity-20`}>
-                      {p.icon}
-                    </div>
-                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${p.color} flex items-center justify-center mb-4 shadow-xl`}>
-                      {p.icon}
-                    </div>
-                    <p className="font-bold text-lg">{p.name}</p>
-                    <p className="text-xs text-slate-500">預計流量: 50K - 200K</p>
-                  </button>
-                ))}
+                ].map((p) => {
+                  const linkedAccount = user?.accounts?.find((a: any) => a.platform === p.name.toUpperCase());
+                  return (
+                    <button
+                      key={p.name}
+                      onClick={() => {
+                        setSelectedPlatform(p);
+                        setHandle(linkedAccount?.handle || "");
+                        setFollowers(linkedAccount?.followers?.toString() || "");
+                        setShowModal(true);
+                      }}
+                      className="group relative overflow-hidden rounded-3xl p-6 bg-white/5 border border-white/10 hover:border-white/20 transition-all text-left active:scale-[0.98]"
+                    >
+                      <div className={`absolute top-0 right-0 p-4 transition-transform group-hover:scale-110 opacity-20`}>
+                        {p.icon}
+                      </div>
+                      <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${p.color} flex items-center justify-center mb-4 shadow-xl`}>
+                        {p.icon}
+                      </div>
+                      <p className="font-bold text-lg">{p.name}</p>
+                      <p className="text-xs text-slate-500">
+                        {linkedAccount ? `@${linkedAccount.handle} (${linkedAccount.followers} 粉絲)` : "尚未連結帳號"}
+                      </p>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -247,6 +266,102 @@ export default function Home() {
           </div>
         )}
       </div>
+      {/* Social Account Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-slate-900 border border-white/10 rounded-[32px] p-8 w-full max-w-md space-y-6 shadow-2xl relative overflow-hidden">
+            <div className={`absolute top-0 right-0 p-8 opacity-10 rotate-12 transition-transform`}>
+              {selectedPlatform?.icon}
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-2xl font-black tracking-tight flex items-center gap-2">
+                連結 {selectedPlatform?.name}
+              </h3>
+              <p className="text-slate-400 text-sm">請輸入正確的帳號資訊以便系統驗證</p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">帳號名稱 (Handle)</label>
+                <div className="relative group">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">@</div>
+                  <input
+                    type="text"
+                    value={handle}
+                    onChange={(e) => setHandle(e.target.value)}
+                    placeholder="your_username"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-10 pr-4 focus:border-blue-500 focus:bg-white/10 outline-none transition-all font-medium"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">粉絲數量 (Followers)</label>
+                <input
+                  type="number"
+                  value={followers}
+                  onChange={(e) => setFollowers(e.target.value)}
+                  placeholder="例如: 1500"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 focus:border-blue-500 focus:bg-white/10 outline-none transition-all font-medium"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-4 pt-2">
+              <button
+                onClick={() => setShowModal(false)}
+                className="flex-1 px-6 py-4 rounded-2xl font-bold bg-white/5 hover:bg-white/10 transition-all border border-white/5"
+              >
+                取消
+              </button>
+              <button
+                disabled={isSaving || !handle}
+                onClick={async () => {
+                  setIsSaving(true);
+                  try {
+                    const res = await fetch(`${BACKEND_URL}/profile/social-account`, {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        "x-telegram-id": user?.telegramId
+                      },
+                      body: JSON.stringify({
+                        platform: selectedPlatform?.name.toUpperCase(),
+                        handle,
+                        followers
+                      })
+                    });
+                    const data = await res.json();
+                    if (data.account) {
+                      // Update local user state with new account
+                      const updatedAccounts = [...(user.accounts || [])];
+                      const existingIndex = updatedAccounts.findIndex(a => a.platform === data.account.platform);
+                      if (existingIndex > -1) {
+                        updatedAccounts[existingIndex] = data.account;
+                      } else {
+                        updatedAccounts.push(data.account);
+                      }
+                      const updatedUser = { ...user, accounts: updatedAccounts };
+                      setUser(updatedUser);
+                      localStorage.setItem("flowgrow_user", JSON.stringify(updatedUser));
+                      setShowModal(false);
+                    }
+                  } catch (e) {
+                    console.error("Save account error:", e);
+                  } finally {
+                    setIsSaving(false);
+                  }
+                }}
+                className="flex-1 px-6 py-4 rounded-2xl font-bold bg-blue-600 hover:bg-blue-500 shadow-xl shadow-blue-600/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-2"
+              >
+                {isSaving && <Loader2 className="animate-spin" size={18} />}
+                儲存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

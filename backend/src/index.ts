@@ -4,6 +4,8 @@ import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
 
+import profileRoutes from './routes/profile.js';
+
 dotenv.config();
 
 const app = express();
@@ -12,6 +14,8 @@ const port = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
+
+app.use('/profile', profileRoutes);
 
 app.get('/health', (req, res) => {
     res.json({ status: 'ok' });
