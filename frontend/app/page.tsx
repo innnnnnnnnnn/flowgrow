@@ -32,6 +32,7 @@ export default function Home() {
   const [followers, setFollowers] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isFetchingFollowers, setIsFetchingFollowers] = useState(false);
+  const [fetchFailed, setFetchFailed] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -45,14 +46,25 @@ export default function Home() {
             const savedUser = localStorage.getItem("flowgrow_user");
             if (savedUser && savedUser !== "undefined") {
               const parsed = JSON.parse(savedUser);
-              if (parsed && parsed.id) {
-                setUser(parsed);
-                setLoading(false);
-                return;
+              if (parsed && parsed.id && parsed.telegramId) {
+                // Verify the session is still valid
+                const res = await fetch(`${BACKEND_URL}/profile`, {
+                  headers: { "x-telegram-id": parsed.telegramId }
+                });
+
+                if (res.ok) {
+                  const data = await res.json();
+                  setUser(data.user);
+                  setLoading(false);
+                  return;
+                } else {
+                  // Session invalid (e.g. backend restarted and wiped DB), clear it
+                  localStorage.removeItem("flowgrow_user");
+                }
               }
             }
           } catch (e) {
-            console.error("Local storage parse error:", e);
+            console.error("Local storage error:", e);
             localStorage.removeItem("flowgrow_user");
           }
 
@@ -111,9 +123,13 @@ export default function Home() {
         const data = await res.json();
         if (data.followers && data.followers > 0) {
           setFollowers(data.followers.toString());
+          setFetchFailed(false);
+        } else {
+          setFetchFailed(true);
         }
       } catch (e) {
         console.error("Fetch followers error:", e);
+        setFetchFailed(true);
       } finally {
         setIsFetchingFollowers(false);
       }
@@ -221,7 +237,7 @@ export default function Home() {
                       </div>
                       <p className="font-bold text-lg">{p.name}</p>
                       <p className="text-xs text-slate-500">
-                        {linkedAccount ? `@${linkedAccount.handle} (${linkedAccount.followers} 粉絲)` : "尚未連結帳號"}
+                        {linkedAccount ? `@${linkedAccount.handle}${linkedAccount.followers > 0 ? ` (${linkedAccount.followers} 粉絲)` : ""}` : "尚未連結帳號"}
                       </p>
                     </button>
                   );
@@ -325,7 +341,7 @@ export default function Home() {
 
               <div className="space-y-1.5 pt-2">
                 <div className="flex justify-between items-center px-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">系統偵測粉絲數 (System Detected)</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">系統偵測粉絲數</label>
                   {isFetchingFollowers && <Loader2 className="animate-spin text-blue-500" size={14} />}
                 </div>
 
@@ -333,19 +349,21 @@ export default function Home() {
                   <div className="flex items-center gap-3">
                     <Users className="text-slate-500" size={20} />
                     <span className="text-2xl font-black tracking-tight">
-                      {isFetchingFollowers ? "---" : (followers || "0")}
+                      {isFetchingFollowers ? "---" : (followers && followers !== "0" ? followers : "尚未偵測")}
                     </span>
                   </div>
                   <div className="text-right">
                     {isFetchingFollowers ? (
                       <span className="text-xs font-bold text-blue-400 animate-pulse">連線中...</span>
+                    ) : fetchFailed ? (
+                      <span className="text-[10px] font-bold text-slate-400">目前平台限制，仍可直接儲存</span>
                     ) : (
                       <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Followers</span>
                     )}
                   </div>
                 </div>
                 <p className="text-[10px] text-slate-500 mt-2 px-1 italic">
-                  * 系統會根據您的帳號名稱自動同步最新數據，無需手動輸入。
+                  * 系統會嘗試自動偵測粉絲數，無法偵測時仍可按下方「儲存」直接綁定帳號。
                 </p>
               </div>
             </div>

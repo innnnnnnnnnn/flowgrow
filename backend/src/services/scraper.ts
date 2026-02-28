@@ -1,5 +1,7 @@
-import axios from "axios";
+import { exec } from "child_process";
+import { promisify } from "util";
 
+const execAsync = promisify(exec);
 export async function getFollowerCount(platform: string, handle: string): Promise<number> {
     const cleanHandle = handle.replace("@", "").trim();
 
@@ -21,23 +23,18 @@ export async function getFollowerCount(platform: string, handle: string): Promis
 async function fetchInstagramFollowers(handle: string): Promise<number> {
     try {
         const url = `https://www.instagram.com/${handle}/`;
-        const response = await axios.get(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.9',
-            },
-            timeout: 10000
-        });
+        // Use curl as it's often less blocked by WAFs compared to node HTTP clients
+        const cmd = `curl -sL -m 10 -A "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)" "${url}"`;
+        const { stdout } = await execAsync(cmd);
 
         // Pattern: "614M Followers" in meta tags
         const patterns = [
-            /content=\"([\d,.]+)([KMB]?)\s+Followers/i,
-            /([\d,.]+)([KMB]?)\s+Followers/i
+            /content=\"([\d,.]+)([KMB]?)\s+(Fans|Followers|粉絲)/i,
+            /([\d,.]+)([KMB]?)\s+(Fans|Followers|粉絲)/i
         ];
 
         for (const pattern of patterns) {
-            const match = response.data.match(pattern);
+            const match = stdout.match(pattern);
             if (match) {
                 console.log(`Matched pattern for ${handle}: ${match[0]}`);
                 return parseCount(match[1] + (match[2] || ""));
@@ -54,21 +51,17 @@ async function fetchInstagramFollowers(handle: string): Promise<number> {
 async function fetchTikTokFollowers(handle: string): Promise<number> {
     try {
         const url = `https://www.tiktok.com/@${handle}`;
-        const response = await axios.get(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36',
-            },
-            timeout: 10000
-        });
+        const cmd = `curl -sL -m 10 -A "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)" "${url}"`;
+        const { stdout } = await execAsync(cmd);
 
         // Pattern 1: JSON
-        const jsonMatch = response.data.match(/\"followerCount\":(\d+)/);
+        const jsonMatch = stdout.match(/\"followerCount\":(\d+)/);
         if (jsonMatch && jsonMatch[1]) {
             return parseInt(jsonMatch[1]);
         }
 
         // Pattern 2: Meta
-        const metaMatch = response.data.match(/(\d+(?:\.\d+)?[KMB]?)\s+Followers/i);
+        const metaMatch = stdout.match(/(\d+(?:\.\d+)?[KMB]?)\s+(Fans|Followers|粉絲)/i);
         if (metaMatch && metaMatch[1]) {
             return parseCount(metaMatch[1]);
         }
