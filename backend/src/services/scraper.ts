@@ -11,6 +11,8 @@ export async function getFollowerCount(platform: string, handle: string): Promis
                 return await fetchInstagramFollowers(cleanHandle);
             case "TIKTOK":
                 return await fetchTikTokFollowers(cleanHandle);
+            case "FACEBOOK":
+                return await fetchFacebookFollowers(cleanHandle);
             default:
                 return 0;
         }
@@ -84,6 +86,48 @@ async function fetchTikTokFollowers(handle: string): Promise<number> {
         return 0;
     } catch (e: any) {
         console.error(`TikTok fetch failed for ${handle}: ${e?.message}`);
+        return 0;
+    }
+}
+
+async function fetchFacebookFollowers(handle: string): Promise<number> {
+    try {
+        // Facebook URLs can be either profile names or IDs. We'll try the main page URL.
+        const url = `https://www.facebook.com/${encodeURIComponent(handle)}`;
+        const cmd = `curl -sL -m 10 -H "Accept-Language: zh-TW,zh,en-US,en" -A "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36" "${url}"`;
+        const { stdout } = await execAsync(cmd);
+
+        // Pattern: "1.2K followers" or "1.2萬 位追蹤者"
+        const patterns = [
+            /([\d,.]+)\s*(萬|K|M|B)?\s*(位追蹤者|followers|fans)/i,
+            /"follower_count":\s*(\d+)/i,
+            /follower_count\\":(\d+)/i
+        ];
+
+        for (const pattern of patterns) {
+            const match = stdout.match(pattern);
+            if (match && match[1]) {
+                const numStr = match[1];
+                const multiplierStr = match[2] || "";
+                
+                // If the pattern hit the exact count (group 2 is not a multiplier)
+                if (!['萬', 'K', 'M', 'B'].includes(multiplierStr.toUpperCase()) && !multiplierStr) {
+                     return parseInt(numStr, 10);
+                }
+
+                let value = numStr + (multiplierStr === '萬' ? '0000' : multiplierStr);
+                // The parseCount function handles K, M, B
+                if (multiplierStr === '萬') {
+                   return Math.floor(parseFloat(numStr.replace(/,/g, '')) * 10000);
+                } else {
+                   return parseCount(numStr + multiplierStr);
+                }
+            }
+        }
+
+        return 0;
+    } catch (e: any) {
+        console.error(`Facebook fetch failed for ${handle}: ${e?.message}`);
         return 0;
     }
 }
