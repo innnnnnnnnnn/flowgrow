@@ -81,6 +81,15 @@ export default function Home() {
     authenticate();
   }, []);
 
+  useEffect(() => {
+    if (!loading && !user && mounted) {
+      const isTelegram = typeof window !== "undefined" && window.Telegram?.WebApp?.initData;
+      if (!isTelegram) {
+        router.push("/login");
+      }
+    }
+  }, [loading, user, mounted, router]);
+
   if (!mounted) return null;
 
   if (loading) {
@@ -90,15 +99,6 @@ export default function Home() {
       </div>
     );
   }
-
-  useEffect(() => {
-    if (!loading && !user && mounted) {
-      const isTelegram = typeof window !== "undefined" && window.Telegram?.WebApp?.initData;
-      if (!isTelegram) {
-        router.push("/login");
-      }
-    }
-  }, [loading, user, mounted, router]);
 
   return (
     <main className="min-h-screen bg-[#050510] relative overflow-hidden">
