@@ -247,17 +247,6 @@ export default function Home() {
           </div>
         )}
       </div>
-
-      <style jsx global>{`
-        .text-glow {
-          text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
-        }
-        @keyframes float {
-          0% { transform: translateY(0px); }
-          50% { transform: translateY(-10px); }
-          100% { transform: translateY(0px); }
-        }
-      `}</style>
     </main>
   );
 }

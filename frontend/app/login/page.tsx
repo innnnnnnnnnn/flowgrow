@@ -144,14 +144,6 @@ export default function LoginPage() {
                 </footer>
             </div>
 
-            <style jsx global>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 0.3; transform: scale(1); }
-          50% { opacity: 0.5; transform: scale(1.1); }
-        }
-        .animate-delay-2000 { animation-delay: 2s; }
-        .animate-delay-4000 { animation-delay: 4s; }
-      `}</style>
         </div>
     );
 }

@@ -18,7 +18,6 @@ export default function RootLayout({
   return (
     <html lang="zh-TW">
       <head>
-        <title>FLOWGROW</title>
         <Script
           src="https://telegram.org/js/telegram-web-app.js"
           strategy="beforeInteractive"
