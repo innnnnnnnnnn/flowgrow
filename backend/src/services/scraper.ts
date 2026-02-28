@@ -22,6 +22,21 @@ export async function getFollowerCount(platform: string, handle: string): Promis
 
 async function fetchInstagramFollowers(handle: string): Promise<number> {
     try {
+        // Try exact count via API first
+        const apiUrl = `https://www.instagram.com/api/v1/users/web_profile_info/?username=${handle}`;
+        const apiCmd = `curl -sL -m 10 -A "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)" -H "x-ig-app-id: 936619743392459" "${apiUrl}"`;
+        const { stdout: apiStdout } = await execAsync(apiCmd);
+        
+        try {
+            const apiMatch = apiStdout.match(/"edge_followed_by"\s*:\s*\{\s*"count"\s*:\s*(\d+)\s*\}/);
+            if (apiMatch && apiMatch[1]) {
+                return parseInt(apiMatch[1], 10);
+            }
+        } catch (e) {
+            // fallback
+        }
+
+        // Fallback to meta tags
         const url = `https://www.instagram.com/${handle}/`;
         // Use curl as it's often less blocked by WAFs compared to node HTTP clients
         const cmd = `curl -sL -m 10 -A "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)" "${url}"`;

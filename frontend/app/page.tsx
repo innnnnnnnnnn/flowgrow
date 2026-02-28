@@ -237,7 +237,7 @@ export default function Home() {
                       </div>
                       <p className="font-bold text-lg">{p.name}</p>
                       <p className="text-xs text-slate-500">
-                        {linkedAccount ? `@${linkedAccount.handle}${linkedAccount.followers > 0 ? ` (${linkedAccount.followers} 粉絲)` : ""}` : "尚未連結帳號"}
+                        {linkedAccount ? `@${linkedAccount.handle}${linkedAccount.followers > 0 ? ` (${Number(linkedAccount.followers).toLocaleString()} 粉絲)` : ""}` : "尚未連結帳號"}
                       </p>
                     </button>
                   );
@@ -349,7 +349,7 @@ export default function Home() {
                   <div className="flex items-center gap-3">
                     <Users className="text-slate-500" size={20} />
                     <span className="text-2xl font-black tracking-tight">
-                      {isFetchingFollowers ? "---" : (followers && followers !== "0" ? followers : "尚未偵測")}
+                      {isFetchingFollowers ? "---" : (followers && followers !== "0" ? Number(followers).toLocaleString() : "尚未偵測")}
                     </span>
                   </div>
                   <div className="text-right">
