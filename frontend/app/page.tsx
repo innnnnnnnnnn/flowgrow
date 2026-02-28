@@ -19,7 +19,7 @@ import {
   Loader2
 } from "lucide-react";
 
-const BACKEND_URL = "https://flowgrow-backend.onrender.com";
+const BACKEND_URL = "https://flowgrow.onrender.com";
 
 export default function Home() {
   const [role, setRole] = useState<"creator" | "promoter">("creator");
