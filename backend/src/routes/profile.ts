@@ -52,28 +52,32 @@ router.post("/social-account", authenticateUser, async (req: any, res) => {
     }
 
     try {
-        // Upsert social account
-        const account = await prisma.socialAccount.upsert({
-            where: {
-                // Since we don't have a composite unique key in schema yet, 
-                // we find first and update or create. 
-                // Improvement: Add @unique([userId, platform]) to schema later if needed.
-                id: (await prisma.socialAccount.findFirst({
-                    where: { userId: req.user.id, platform: platform as Platform }
-                }))?.id || 'new-uuid-placeholder'
-            },
-            update: {
-                handle,
-                followers: parseInt(followers) || 0,
-                isActive: true,
-            },
-            create: {
-                userId: req.user.id,
-                platform: platform as Platform,
-                handle,
-                followers: parseInt(followers) || 0,
-            },
+        // Find existing record
+        const existing = await prisma.socialAccount.findFirst({
+            where: { userId: req.user.id, platform: platform as Platform }
         });
+
+        let account;
+        if (existing) {
+            account = await prisma.socialAccount.update({
+                where: { id: existing.id },
+                data: {
+                    handle,
+                    followers: parseInt(followers) || 0,
+                    isActive: true,
+                },
+            });
+        } else {
+            account = await prisma.socialAccount.create({
+                data: {
+                    userId: req.user.id,
+                    platform: platform as Platform,
+                    handle,
+                    followers: parseInt(followers) || 0,
+                    isActive: true,
+                },
+            });
+        }
 
         res.json({ account });
     } catch (error) {
