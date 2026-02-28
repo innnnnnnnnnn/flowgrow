@@ -92,7 +92,8 @@ app.post('/auth/telegram-widget', async (req, res) => {
         const user = await prisma.user.upsert({
             where: { telegramId },
             update: { username },
-            create: { telegramId, username }
+            create: { telegramId, username },
+            include: { accounts: true }
         });
         res.json({ user });
     } catch (error) {
@@ -115,7 +116,8 @@ app.post('/auth/telegram', async (req, res) => {
         const user = await prisma.user.upsert({
             where: { telegramId },
             update: { username },
-            create: { telegramId, username }
+            create: { telegramId, username },
+            include: { accounts: true }
         });
         res.json({ user, userData });
     } catch (error) {
