@@ -26,7 +26,11 @@ export default function LoginPage() {
                 });
                 const data = await res.json();
                 if (data.user) {
-                    localStorage.setItem("flowgrow_user", JSON.stringify(data.user));
+                    try {
+                        localStorage.setItem("flowgrow_user", JSON.stringify(data.user));
+                    } catch (err) {
+                        console.error("Local storage set error in login:", err);
+                    }
                     router.push("/");
                 }
             } catch (e) {

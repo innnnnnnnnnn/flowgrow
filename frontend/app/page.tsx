@@ -34,12 +34,20 @@ export default function Home() {
     const authenticate = async () => {
       try {
         if (typeof window !== "undefined") {
-          // Check local storage first
-          const savedUser = localStorage.getItem("flowgrow_user");
-          if (savedUser) {
-            setUser(JSON.parse(savedUser));
-            setLoading(false);
-            return;
+          // Safe localStorage access
+          try {
+            const savedUser = localStorage.getItem("flowgrow_user");
+            if (savedUser && savedUser !== "undefined") {
+              const parsed = JSON.parse(savedUser);
+              if (parsed && parsed.id) {
+                setUser(parsed);
+                setLoading(false);
+                return;
+              }
+            }
+          } catch (e) {
+            console.error("Local storage parse error:", e);
+            localStorage.removeItem("flowgrow_user");
           }
 
           const webapp = window.Telegram?.WebApp;
@@ -55,7 +63,11 @@ export default function Home() {
             const data = await res.json();
             if (data.user) {
               setUser(data.user);
-              localStorage.setItem("flowgrow_user", JSON.stringify(data.user));
+              try {
+                localStorage.setItem("flowgrow_user", JSON.stringify(data.user));
+              } catch (e) {
+                console.error("Local storage set error:", e);
+              }
             }
           }
         }
