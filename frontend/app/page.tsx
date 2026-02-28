@@ -34,6 +34,14 @@ export default function Home() {
     const authenticate = async () => {
       try {
         if (typeof window !== "undefined") {
+          // Check local storage first
+          const savedUser = localStorage.getItem("flowgrow_user");
+          if (savedUser) {
+            setUser(JSON.parse(savedUser));
+            setLoading(false);
+            return;
+          }
+
           const webapp = window.Telegram?.WebApp;
           if (webapp && webapp.initData) {
             webapp.ready();
@@ -47,6 +55,7 @@ export default function Home() {
             const data = await res.json();
             if (data.user) {
               setUser(data.user);
+              localStorage.setItem("flowgrow_user", JSON.stringify(data.user));
             }
           }
         }
@@ -70,11 +79,14 @@ export default function Home() {
     );
   }
 
-  // If no user is authenticated and not in Telegram (or initData is empty), redirect to landing
-  if (!user && (typeof window !== "undefined" && !window.Telegram?.WebApp?.initData)) {
-    router.push("/login");
-    return null;
-  }
+  useEffect(() => {
+    if (!loading && !user && mounted) {
+      const isTelegram = typeof window !== "undefined" && window.Telegram?.WebApp?.initData;
+      if (!isTelegram) {
+        router.push("/login");
+      }
+    }
+  }, [loading, user, mounted, router]);
 
   return (
     <main className="min-h-screen bg-[#050510] relative overflow-hidden">

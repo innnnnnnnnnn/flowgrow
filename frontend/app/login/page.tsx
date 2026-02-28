@@ -26,6 +26,7 @@ export default function LoginPage() {
                 });
                 const data = await res.json();
                 if (data.user) {
+                    localStorage.setItem("flowgrow_user", JSON.stringify(data.user));
                     router.push("/");
                 }
             } catch (e) {
