@@ -32,31 +32,29 @@ export default function Home() {
     setMounted(true);
 
     const authenticate = async () => {
-      if (typeof window !== "undefined") {
-        const webapp = window.Telegram?.WebApp;
-        if (webapp) {
-          webapp.ready();
-          webapp.expand();
+      try {
+        if (typeof window !== "undefined") {
+          const webapp = window.Telegram?.WebApp;
+          if (webapp && webapp.initData) {
+            webapp.ready();
+            webapp.expand();
 
-          const initData = webapp.initData;
-          if (initData) {
-            try {
-              const res = await fetch(`${BACKEND_URL}/auth/telegram`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ initData })
-              });
-              const data = await res.json();
-              if (data.user) {
-                setUser(data.user);
-              }
-            } catch (e) {
-              console.error("Auth error:", e);
+            const res = await fetch(`${BACKEND_URL}/auth/telegram`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ initData: webapp.initData })
+            });
+            const data = await res.json();
+            if (data.user) {
+              setUser(data.user);
             }
           }
         }
+      } catch (e) {
+        console.error("Auth error:", e);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     authenticate();
