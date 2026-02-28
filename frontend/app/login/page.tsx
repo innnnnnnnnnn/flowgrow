@@ -5,7 +5,7 @@ import { Zap, ShieldCheck, TrendingUp, Users, ChevronRight, Loader2 } from "luci
 import { useRouter } from "next/navigation";
 
 const BACKEND_URL = "http://localhost:3001";
-const BOT_USERNAME = "flowlo_bot"; // TODO: Replace with your actual bot username
+const BOT_USERNAME = "innnnnnnnnnncat_bot"; // TODO: Replace with your actual bot username
 
 export default function LoginPage() {
     const [mounted, setMounted] = useState(false);
