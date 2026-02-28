@@ -1,0 +1,111 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum UserRole {
+  CREATOR
+  PROMOTER
+  ADMIN
+}
+
+enum Platform {
+  INSTAGRAM
+  TIKTOK
+  FACEBOOK
+  X
+  THREADS
+  OTHERS
+}
+
+enum OrderStatus {
+  PENDING
+  MATCHED
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskStatus {
+  ASSIGNED
+  SUBMITTED
+  APPROVED
+  DISPUTED
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  REVENUE
+  PLATFORM_FEE
+}
+
+model User {
+  id           String        @id @default(uuid())
+  telegramId   String        @unique
+  username     String?
+  role         UserRole      @default(PROMOTER)
+  balance      Float         @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  accounts     SocialAccount[]
+  orders       Order[]       @relation("CreatorOrders")
+  tasks        Task[]        @relation("PromoterTasks")
+  transactions Transaction[]
+}
+
+model SocialAccount {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  platform  Platform
+  handle    String
+  followers Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tasks     Task[]
+}
+
+model Order {
+  id           String      @id @default(uuid())
+  creatorId    String
+  creator      User        @relation("CreatorOrders", fields: [creatorId], references: [id])
+  platform     Platform
+  budget       Float
+  requirements String?
+  status       OrderStatus @default(PENDING)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  tasks        Task[]
+}
+
+model Task {
+  id              String         @id @default(uuid())
+  orderId         String
+  order           Order          @relation(fields: [orderId], references: [id])
+  promoterId      String
+  promoter        User           @relation("PromoterTasks", fields: [promoterId], references: [id])
+  socialAccountId String
+  socialAccount   SocialAccount  @relation(fields: [socialAccountId], references: [id])
+  proofUrl        String?
+  status          TaskStatus     @default(ASSIGNED)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  approvedAt      DateTime?
+}
+
+model Transaction {
+  id          String          @id @default(uuid())
+  userId      String
+  user        User            @relation(fields: [userId], references: [id])
+  type        TransactionType
+  amount      Float
+  referenceId String?
+  createdAt   DateTime        @default(now())
+}
