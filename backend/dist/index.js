@@ -190,7 +190,16 @@ app.post('/tasks/match', async (req, res) => {
     });
     res.json(task);
 });
-app.listen(port, () => {
-    console.log(`FLOWGROW backend listening at http://localhost:${port}`);
-});
+try {
+    app.listen(port, () => {
+        console.log(`FLOWGROW backend listening at http://localhost:${port}`);
+    }).on('error', (err) => {
+        console.error('Server failed to start:', err);
+        process.exit(1);
+    });
+}
+catch (e) {
+    console.error('Unhandled exception during startup:', e);
+    process.exit(1);
+}
 //# sourceMappingURL=index.js.map
