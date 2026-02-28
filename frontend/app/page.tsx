@@ -323,23 +323,30 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">粉絲數量 (Followers)</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={followers}
-                    onChange={(e) => setFollowers(e.target.value)}
-                    placeholder="例如: 1500"
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 focus:border-blue-500 focus:bg-white/10 outline-none transition-all font-medium"
-                  />
-                  {isFetchingFollowers && (
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 text-blue-400 text-xs font-bold">
-                      <Loader2 className="animate-spin" size={14} />
-                      偵測中...
-                    </div>
-                  )}
+              <div className="space-y-1.5 pt-2">
+                <div className="flex justify-between items-center px-1">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">系統偵測粉絲數 (System Detected)</label>
+                  {isFetchingFollowers && <Loader2 className="animate-spin text-blue-500" size={14} />}
                 </div>
+
+                <div className="bg-white/5 border border-white/10 rounded-2xl py-5 px-6 flex items-center justify-between group transition-all hover:bg-white/10">
+                  <div className="flex items-center gap-3">
+                    <Users className="text-slate-500" size={20} />
+                    <span className="text-2xl font-black tracking-tight">
+                      {isFetchingFollowers ? "---" : (followers || "0")}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    {isFetchingFollowers ? (
+                      <span className="text-xs font-bold text-blue-400 animate-pulse">連線中...</span>
+                    ) : (
+                      <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Followers</span>
+                    )}
+                  </div>
+                </div>
+                <p className="text-[10px] text-slate-500 mt-2 px-1 italic">
+                  * 系統會根據您的帳號名稱自動同步最新數據，無需手動輸入。
+                </p>
               </div>
             </div>
 
