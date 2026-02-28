@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Zap, ShieldCheck, TrendingUp, Users, ChevronRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-const BACKEND_URL = "http://localhost:3001";
+const BACKEND_URL = "https://flowgrow-backend.onrender.com";
 const BOT_USERNAME = "innnnnnnnnnncat_bot"; // TODO: Replace with your actual bot username
 
 export default function LoginPage() {

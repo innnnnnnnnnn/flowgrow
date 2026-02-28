@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: flowgrow-backend
+    env: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npx prisma db push && npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: BOT_TOKEN
+        sync: false
+      - key: DATABASE_URL
+        value: file:./dev.db
+      - key: PORT
+        value: 10000
+
+  - type: worker
+    name: flowgrow-bot
+    env: node
+    plan: free
+    rootDir: bot
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: BOT_TOKEN
+        sync: false
+      - key: BACKEND_URL
+        fromService:
+          name: flowgrow-backend
+          type: web
+          property: host
+      - key: WEB_APP_URL
+        value: https://innnnnnnnnnn.github.io/flowgrow/
