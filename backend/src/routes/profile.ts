@@ -1,9 +1,26 @@
 import { Router } from "express";
 import { PrismaClient, Platform } from "@prisma/client";
 import { authenticateUser } from "../middleware/auth.js";
+import { getFollowerCount } from "../services/scraper.js";
 
 const router = Router();
 const prisma = new PrismaClient();
+
+// Check follower count (without saving)
+router.get("/check-followers", authenticateUser, async (req: any, res: any) => {
+    const { platform, handle } = req.query;
+
+    if (!platform || !handle) {
+        return res.status(400).json({ error: "Platform and handle are required" });
+    }
+
+    try {
+        const followers = await getFollowerCount(platform as string, handle as string);
+        res.json({ followers });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch followers" });
+    }
+});
 
 // Get current user profile with social accounts
 router.get("/", authenticateUser, async (req: any, res) => {

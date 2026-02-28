@@ -31,6 +31,7 @@ export default function Home() {
   const [handle, setHandle] = useState("");
   const [followers, setFollowers] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isFetchingFollowers, setIsFetchingFollowers] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -94,6 +95,32 @@ export default function Home() {
       }
     }
   }, [loading, user, mounted, router]);
+
+  // Debounced follower fetching
+  useEffect(() => {
+    if (!handle || !selectedPlatform || !showModal) return;
+
+    const delayDebounceFn = setTimeout(async () => {
+      setIsFetchingFollowers(true);
+      try {
+        const res = await fetch(`${BACKEND_URL}/profile/check-followers?platform=${selectedPlatform.name}&handle=${handle}`, {
+          headers: {
+            "x-telegram-id": user?.telegramId
+          }
+        });
+        const data = await res.json();
+        if (data.followers && data.followers > 0) {
+          setFollowers(data.followers.toString());
+        }
+      } catch (e) {
+        console.error("Fetch followers error:", e);
+      } finally {
+        setIsFetchingFollowers(false);
+      }
+    }, 1500); // 1.5s debounce
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [handle, selectedPlatform, showModal, user?.telegramId]);
 
   if (!mounted) return null;
 
@@ -298,13 +325,21 @@ export default function Home() {
 
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">粉絲數量 (Followers)</label>
-                <input
-                  type="number"
-                  value={followers}
-                  onChange={(e) => setFollowers(e.target.value)}
-                  placeholder="例如: 1500"
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 focus:border-blue-500 focus:bg-white/10 outline-none transition-all font-medium"
-                />
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={followers}
+                    onChange={(e) => setFollowers(e.target.value)}
+                    placeholder="例如: 1500"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 focus:border-blue-500 focus:bg-white/10 outline-none transition-all font-medium"
+                  />
+                  {isFetchingFollowers && (
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 text-blue-400 text-xs font-bold">
+                      <Loader2 className="animate-spin" size={14} />
+                      偵測中...
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
