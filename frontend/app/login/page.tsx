@@ -26,7 +26,7 @@ export default function LoginPage() {
                 });
                 const data = await res.json();
                 if (data.user) {
-                    router.push("/flowgrow/");
+                    router.push("/");
                 }
             } catch (e) {
                 console.error("Widget login error:", e);

@@ -74,7 +74,7 @@ export default function Home() {
 
   // If no user is authenticated and not in Telegram (or initData is empty), redirect to landing
   if (!user && (typeof window !== "undefined" && !window.Telegram?.WebApp?.initData)) {
-    router.push("/flowgrow/login");
+    router.push("/");
     return null;
   }
 
